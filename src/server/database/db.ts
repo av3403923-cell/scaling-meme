@@ -9,8 +9,10 @@ class Database {
   private requests: Map<string, StoredRequest> = new Map();
   private userRequests: Map<string, string[]> = new Map();
   private configs: Map<string, any> = new Map();
+  private breakpoints: Map<string, any> = new Map();
+  private mocks: Map<string, any> = new Map();
+  private scripts: Map<string, any> = new Map();
 
-  // User operations
   createUser(data: Omit<User, 'id' | 'createdAt' | 'updatedAt'>): User {
     const user: User = {
       id: uuidv4(),
@@ -31,7 +33,6 @@ class Database {
     return null;
   }
 
-  // Request operations
   saveRequest(request: Omit<HttpRequest, 'id'>): HttpRequest {
     const newRequest: HttpRequest = {
       ...request,
@@ -76,7 +77,12 @@ class Database {
     return false;
   }
 
-  // Analytics
+  clearRequestsByUserId(userId: string) {
+    const requestIds = this.userRequests.get(userId) || [];
+    requestIds.forEach(id => this.requests.delete(id));
+    this.userRequests.set(userId, []);
+  }
+
   getAnalyticsStats(userId: string): AnalyticsData {
     const requests = this.getRequestsByUserId(userId);
     const totalRequests = requests.length;
@@ -137,7 +143,6 @@ class Database {
     return Object.values(statsByStatus);
   }
 
-  // Config
   getConfig(userId: string) {
     return this.configs.get(userId) || {};
   }
@@ -145,6 +150,66 @@ class Database {
   updateConfig(userId: string, config: any) {
     this.configs.set(userId, config);
     return config;
+  }
+
+  // Breakpoints
+  addBreakpoint(userId: string, breakpoint: any) {
+    const id = uuidv4();
+    this.breakpoints.set(id, { ...breakpoint, userId, id });
+    return id;
+  }
+
+  getBreakpoints(userId: string) {
+    return Array.from(this.breakpoints.values()).filter(bp => bp.userId === userId);
+  }
+
+  deleteBreakpoint(userId: string, breakpointId: string) {
+    const bp = this.breakpoints.get(breakpointId);
+    if (bp && bp.userId === userId) {
+      this.breakpoints.delete(breakpointId);
+      return true;
+    }
+    return false;
+  }
+
+  // Mocks
+  addMock(userId: string, mock: any) {
+    const id = uuidv4();
+    this.mocks.set(id, { ...mock, userId, id });
+    return id;
+  }
+
+  getMocks(userId: string) {
+    return Array.from(this.mocks.values()).filter(m => m.userId === userId);
+  }
+
+  deleteMock(userId: string, mockId: string) {
+    const mock = this.mocks.get(mockId);
+    if (mock && mock.userId === userId) {
+      this.mocks.delete(mockId);
+      return true;
+    }
+    return false;
+  }
+
+  // Scripts
+  addScript(userId: string, script: any) {
+    const id = uuidv4();
+    this.scripts.set(id, { ...script, userId, id });
+    return id;
+  }
+
+  getScripts(userId: string) {
+    return Array.from(this.scripts.values()).filter(s => s.userId === userId);
+  }
+
+  deleteScript(userId: string, scriptId: string) {
+    const script = this.scripts.get(scriptId);
+    if (script && script.userId === userId) {
+      this.scripts.delete(scriptId);
+      return true;
+    }
+    return false;
   }
 }
 
