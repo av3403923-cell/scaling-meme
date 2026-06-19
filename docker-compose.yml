@@ -1,0 +1,29 @@
+version: '3.8'
+
+services:
+  app:
+    build: .
+    ports:
+      - "3000:3000"
+      - "8080:8080"
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - PROXY_PORT=8080
+      - JWT_SECRET=your-secret-key-here
+    volumes:
+      - ./data:/app/data
+      - ./logs:/app/logs
+      - ./certs:/app/certs
+    restart: unless-stopped
+
+  proxy:
+    build: .
+    ports:
+      - "8081:8080"
+    environment:
+      - NODE_ENV=production
+      - PROXY_PORT=8080
+    depends_on:
+      - app
+    restart: unless-stopped
